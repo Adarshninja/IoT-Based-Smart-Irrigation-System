@@ -1,0 +1,120 @@
+#define BLYNK_TEMPLATE_ID "Your_Template_ID"
+#define BLYNK_DEVICE_NAME "Your_Device_Name"
+#define BLYNK_AUTH_TOKEN "Your_Blynk_Token"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+// Blynk Auth Token
+char auth[] = BLYNK_AUTH_TOKEN;
+
+// WiFi credentials
+char ssid[] = "Your_WiFi_SSID";
+char pass[] = "Your_WiFi_PASSWORD";
+
+// Relay pins
+#define RELAY1 D1
+#define RELAY2 D2
+#define RELAY3 D3
+#define RELAY4 D4
+
+// Switch pins (for manual control using two-way switches)
+#define SWITCH1 D5
+#define SWITCH2 D6
+#define SWITCH3 D7
+#define SWITCH4 D8
+
+// Variables to store relay states
+bool relay1State = LOW;
+bool relay2State = LOW;
+bool relay3State = LOW;
+bool relay4State = LOW;
+
+// Function to control relay states through the Blynk app
+BLYNK_WRITE(V1) {
+  relay1State = param.asInt();
+  digitalWrite(RELAY1, relay1State);
+}
+
+BLYNK_WRITE(V2) {
+  relay2State = param.asInt();
+  digitalWrite(RELAY2, relay2State);
+}
+
+BLYNK_WRITE(V3) {
+  relay3State = param.asInt();
+  digitalWrite(RELAY3, relay3State);
+}
+
+BLYNK_WRITE(V4) {
+  relay4State = param.asInt();
+  digitalWrite(RELAY4, relay4State);
+}
+
+void checkSwitches() {
+  // Read the switch states
+  bool switch1State = digitalRead(SWITCH1);
+  bool switch2State = digitalRead(SWITCH2);
+  bool switch3State = digitalRead(SWITCH3);
+  bool switch4State = digitalRead(SWITCH4);
+
+  // Toggle relays based on switch input
+  if (switch1State == LOW) {
+    relay1State = !relay1State;
+    digitalWrite(RELAY1, relay1State);
+    Blynk.virtualWrite(V1, relay1State); // Update Blynk app
+    delay(500); // Debouncing
+  }
+
+  if (switch2State == LOW) {
+    relay2State = !relay2State;
+    digitalWrite(RELAY2, relay2State);
+    Blynk.virtualWrite(V2, relay2State); // Update Blynk app
+    delay(500); // Debouncing
+  }
+
+  if (switch3State == LOW) {
+    relay3State = !relay3State;
+    digitalWrite(RELAY3, relay3State);
+    Blynk.virtualWrite(V3, relay3State); // Update Blynk app
+    delay(500); // Debouncing
+  }
+
+  if (switch4State == LOW) {
+    relay4State = !relay4State;
+    digitalWrite(RELAY4, relay4State);
+    Blynk.virtualWrite(V4, relay4State); // Update Blynk app
+    delay(500); // Debouncing
+  }
+}
+
+void setup() {
+  // Debug console
+  Serial.begin(115200);
+
+  // Blynk initialization
+  Blynk.begin(auth, ssid, pass);
+
+  // Set relay pins as output
+  pinMode(RELAY1, OUTPUT);
+  pinMode(RELAY2, OUTPUT);
+  pinMode(RELAY3, OUTPUT);
+  pinMode(RELAY4, OUTPUT);
+
+  // Set switch pins as input with pullup
+  pinMode(SWITCH1, INPUT_PULLUP);
+  pinMode(SWITCH2, INPUT_PULLUP);
+  pinMode(SWITCH3, INPUT_PULLUP);
+  pinMode(SWITCH4, INPUT_PULLUP);
+
+  // Set initial relay states to OFF
+  digitalWrite(RELAY1, LOW);
+  digitalWrite(RELAY2, LOW);
+  digitalWrite(RELAY3, LOW);
+  digitalWrite(RELAY4, LOW);
+}
+
+void loop() {
+  Blynk.run();       // Run Blynk
+  checkSwitches();   // Check the status of manual switches
+}
