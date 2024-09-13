@@ -1,0 +1,70 @@
+#define BLYNK_TEMPLATE_ID "Your_Template_ID"
+#define BLYNK_DEVICE_NAME "Your_Device_Name"
+#define BLYNK_AUTH_TOKEN "Your_Blynk_Token"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <DHT.h>
+
+// Blynk Auth Token
+char auth[] = BLYNK_AUTH_TOKEN;
+
+// WiFi credentials
+char ssid[] = "Your_WiFi_SSID";
+char pass[] = "Your_WiFi_PASSWORD";
+
+// Define pins
+#define DHTPIN D3       // DHT11 sensor connected to D3
+#define MOISTURE_PIN D0 // Moisture sensor connected to D0
+#define RELAY_PIN D4    // Relay connected to D4
+
+// DHT sensor type
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+// Variable for moisture sensor threshold
+int moistureThreshold = 500; // Adjust this according to your sensor's readings
+
+BlynkTimer timer;
+
+// Function to read sensor data and control relay
+void checkSensors() {
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+  int moistureLevel = analogRead(MOISTURE_PIN);
+
+  // Send sensor data to Blynk
+  Blynk.virtualWrite(V1, temperature);
+  Blynk.virtualWrite(V2, humidity);
+  Blynk.virtualWrite(V3, moistureLevel);
+
+  // Control relay based on moisture level
+  if (moistureLevel < moistureThreshold) {
+    digitalWrite(RELAY_PIN, LOW); // Turn ON the relay (watering)
+  } else {
+    digitalWrite(RELAY_PIN, HIGH); // Turn OFF the relay (stop watering)
+  }
+}
+
+void setup() {
+  // Debug console
+  Serial.begin(115200);
+
+  // Blynk initialization
+  Blynk.begin(auth, ssid, pass);
+
+  // Initialize DHT sensor
+  dht.begin();
+
+  // Set relay pin as output
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, HIGH); // Keep relay OFF initially
+
+  // Set up a timer to check the sensors every second
+  timer.setInterval(1000L, checkSensors);
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
